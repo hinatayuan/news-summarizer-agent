@@ -1,25 +1,25 @@
-name = "news-summarizer-agent"
+name = "yd-mastra-agent"
 main = "dist/index.js"
-compatibility_date = "2024-03-01"
+compatibility_date = "2024-11-01"
 compatibility_flags = ["nodejs_compat"]
 
 [vars]
 NODE_ENV = "production"
+DEEPSEEK_API_KEY = "sk-1edd0944d3d24a76b3ded1aa0298e20f"
+
+# Cloudflare account configuration
+account_id = "4f626c727482ce1b73d26bb9f9244d79"
+
+# Optional: KV namespace for caching
+# [[kv_namespaces]]
+# binding = "NEWS_CACHE"
+# id = "your-kv-namespace-id"
+# preview_id = "your-preview-kv-namespace-id"
 
 [build]
 command = "npm run build"
 
-[[kv_namespaces]]
-binding = "NEWS_CACHE"
-id = "your-kv-namespace-id"
-preview_id = "your-preview-kv-namespace-id"
-
-[build.upload]
-format = "modules"
-dir = "dist"
-main = "./index.js"
-
-# Environment variables for deployment
-# Set these in Cloudflare Workers dashboard or via wrangler secret
-# DEEPSEEK_API_KEY = your-deepseek-api-key
-# NEWS_API_KEY = your-news-api-key (optional)
+# Routes (uncomment if you have a custom domain)
+# [[routes]]
+# pattern = "news-api.yourdomain.com/*"
+# zone_name = "yourdomain.com"
