@@ -11,6 +11,78 @@ A real-time news summarization service built with **Mastra AI** framework and **
 🔗 **Keyword Extraction**: Extracts relevant keywords and topics  
 ⚡ **Real-Time Processing**: Fast response times with edge deployment  
 🌍 **Global CDN**: Deployed on Cloudflare Workers for worldwide access  
+🚀 **One-Command Deploy**: Deploy with `npm run deploy` using Mastra CloudflareDeployer  
+
+## Quick Start
+
+### Prerequisites
+
+- Node.js 20.0+
+- Cloudflare account
+- DeepSeek API key
+
+### Setup & Deploy
+
+1. **Clone and install**
+   ```bash
+   git clone https://github.com/hinatayuan/news-summarizer-agent.git
+   cd news-summarizer-agent
+   npm install
+   ```
+
+2. **Configure environment**
+   ```bash
+   cp .env.example .env
+   # Edit .env with your credentials (see configuration section)
+   ```
+
+3. **Deploy to Cloudflare Workers**
+   ```bash
+   npm run build
+   npm run deploy
+   ```
+
+That's it! Your news summarizer agent is now live on Cloudflare Workers.
+
+## Configuration
+
+### Environment Variables
+
+Create a `.env` file with the following variables:
+
+```bash
+# Required: DeepSeek API
+DEEPSEEK_API_KEY=sk-1edd0944d3d24a76b3ded1aa0298e20f
+
+# Required: Cloudflare Configuration
+CLOUDFLARE_ACCOUNT_ID=your-cloudflare-account-id
+CLOUDFLARE_API_TOKEN=your-cloudflare-api-token
+CLOUDFLARE_EMAIL=your-email@example.com
+
+# Optional: KV Namespace for caching
+CLOUDFLARE_KV_NAMESPACE_ID=your-kv-namespace-id
+```
+
+### Getting Cloudflare Credentials
+
+#### 1. Cloudflare Account ID
+- Go to [Cloudflare Dashboard](https://dash.cloudflare.com/)
+- Select any domain or go to the right sidebar
+- Copy your **Account ID** from the right sidebar
+
+#### 2. Cloudflare API Token
+- Go to [Cloudflare API Tokens](https://dash.cloudflare.com/profile/api-tokens)
+- Click "Create Token"
+- Use "Custom token" template with these permissions:
+  - **Account**: `Cloudflare Workers:Edit`
+  - **Zone**: `Zone:Read` (if using custom domains)
+  - **Zone Resources**: Include all zones or specific zones
+
+#### 3. KV Namespace (Optional)
+- Go to [Workers KV](https://dash.cloudflare.com/workers/kv/namespaces)
+- Click "Create namespace"
+- Name it `NEWS_CACHE`
+- Copy the Namespace ID
 
 ## API Endpoints
 
@@ -73,106 +145,68 @@ GET /api/docs
 }
 ```
 
+## Local Development
+
+```bash
+# Install dependencies
+npm install
+
+# Start development server with Mastra playground
+npm run dev
+
+# Open playground at http://localhost:4111
+```
+
+## Deployment Process
+
+The project uses **Mastra CloudflareDeployer** for seamless deployment:
+
+1. **Build**: `npm run build` - Mastra packages your application
+2. **Deploy**: `npm run deploy` - Automatically deploys to Cloudflare Workers
+3. **Access**: Your API is live at `https://news-summarizer-agent.your-subdomain.workers.dev`
+
+### Deployment Features
+
+✅ **Automatic Configuration**: Mastra generates optimized Cloudflare Workers config  
+✅ **Environment Management**: Secure handling of API keys and secrets  
+✅ **Edge Optimization**: Code is optimized for Cloudflare's edge runtime  
+✅ **Route Management**: Automatic API route configuration  
+✅ **KV Integration**: Optional caching with Cloudflare KV  
+
 ## Tech Stack
 
 - **Framework**: [Mastra AI](https://mastra.ai) - TypeScript agent framework
 - **AI Model**: [DeepSeek V3](https://deepseek.com) - Advanced language model
 - **Runtime**: [Cloudflare Workers](https://workers.cloudflare.com) - Edge computing platform
+- **Deployer**: Mastra CloudflareDeployer - One-command deployment
 - **Language**: TypeScript
-- **Build Tool**: Wrangler
 
-## Local Development
+## Advanced Configuration
 
-### Prerequisites
+### Custom Domains
 
-- Node.js 20.0+
-- npm or yarn
-- DeepSeek API key
+To use a custom domain, update `src/mastra/index.ts`:
 
-### Setup
+```typescript
+deployer: new CloudflareDeployer({
+  // ... other config
+  routes: [
+    {
+      pattern: 'news-api.yourdomain.com/*',
+      zone_name: 'yourdomain.com',
+      custom_domain: true,
+    },
+  ],
+}),
+```
 
-1. **Clone the repository**
-   ```bash
-   git clone https://github.com/hinatayuan/news-summarizer-agent.git
-   cd news-summarizer-agent
-   ```
+### KV Caching
 
-2. **Install dependencies**
-   ```bash
-   npm install
-   ```
+Enable caching by setting `CLOUDFLARE_KV_NAMESPACE_ID` in your environment variables. The application will automatically cache news articles to reduce API calls.
 
-3. **Configure environment**
-   ```bash
-   cp .env.example .env
-   # Edit .env with your DeepSeek API key
-   ```
+### News Sources
 
-4. **Start development server**
-   ```bash
-   npm run dev
-   ```
-
-5. **Open Mastra playground**
-   ```
-   http://localhost:4111
-   ```
-
-## Deployment to Cloudflare Workers
-
-### Prerequisites
-
-- Cloudflare account
-- Wrangler CLI installed
-
-### Deploy Steps
-
-1. **Install Wrangler**
-   ```bash
-   npm install -g wrangler
-   ```
-
-2. **Login to Cloudflare**
-   ```bash
-   wrangler login
-   ```
-
-3. **Create KV Namespace (optional, for caching)**
-   ```bash
-   wrangler kv:namespace create "NEWS_CACHE"
-   wrangler kv:namespace create "NEWS_CACHE" --preview
-   ```
-
-4. **Update wrangler.toml**
-   - Update the KV namespace IDs in `wrangler.toml`
-
-5. **Set environment variables**
-   ```bash
-   wrangler secret put DEEPSEEK_API_KEY
-   # Enter your DeepSeek API key when prompted
-   ```
-
-6. **Deploy**
-   ```bash
-   npm run build
-   npm run deploy
-   ```
-
-### Cloudflare Configuration
-
-You'll need to configure these in your Cloudflare Workers dashboard:
-
-**Environment Variables:**
-- `DEEPSEEK_API_KEY`: Your DeepSeek API key
-- `NODE_ENV`: Set to "production"
-
-**KV Namespaces (Optional):**
-- `NEWS_CACHE`: For caching news articles and reducing API calls
-
-**Worker Settings:**
-- **CPU Limits**: Standard (sufficient for most use cases)
-- **Memory**: 128MB minimum
-- **Timeout**: 30 seconds for news processing
+Customize news sources by modifying `src/mastra/tools/news-fetcher.ts`.
 
 ## Usage Examples
 
@@ -180,12 +214,12 @@ You'll need to configure these in your Cloudflare Workers dashboard:
 
 **Get quick tech news:**
 ```bash
-curl "https://your-worker.your-subdomain.workers.dev/api/news?category=technology&maxArticles=3"
+curl "https://your-worker.workers.dev/api/news?category=technology&maxArticles=3"
 ```
 
 **Detailed analysis:**
 ```bash
-curl -X POST "https://your-worker.your-subdomain.workers.dev/api/summarize" \
+curl -X POST "https://your-worker.workers.dev/api/summarize" \
   -H "Content-Type: application/json" \
   -d '{
     "category": "AI",
@@ -214,41 +248,43 @@ const analysis = await fetch('/api/summarize', {
 });
 ```
 
-## Configuration
-
-### News Sources
-
-The agent fetches news from multiple sources:
-- Hacker News API
-- Public RSS feeds
-- Mock data for testing
-
-You can customize sources by modifying `src/mastra/tools/news-fetcher.ts`.
-
-### Summary Settings
-
-- **Length**: `short` (1-2 sentences), `medium` (2-3 sentences), `long` (3-4 sentences)
-- **Categories**: Technology, Politics, Business, Sports, Entertainment, Science, Health, World, Other
-- **Sentiment**: Positive, Negative, Neutral
-- **Importance**: High, Medium, Low
-
 ## Contributing
 
 1. Fork the repository
 2. Create a feature branch
 3. Make your changes
-4. Add tests if applicable
-5. Submit a pull request
+4. Test locally with `npm run dev`
+5. Deploy and test with `npm run deploy`
+6. Submit a pull request
 
-## License
+## Cost Estimation
 
-MIT License - see [LICENSE](LICENSE) file for details.
+**Cloudflare Workers:**
+- Free tier: 100,000 requests/day
+- Paid: $5/month for 10M requests
 
-## Support
+**DeepSeek API:**
+- Extremely cost-effective compared to other LLMs
+- Pay per token usage
+
+## Troubleshooting
+
+### Common Issues
+
+1. **Deploy fails**: Check your Cloudflare credentials in `.env`
+2. **API errors**: Verify your DeepSeek API key
+3. **CORS issues**: The app includes CORS headers by default
+4. **Rate limits**: Consider implementing caching with KV
+
+### Support
 
 - 📖 [Mastra Documentation](https://mastra.ai/docs)
 - 🤖 [DeepSeek API Docs](https://platform.deepseek.com/docs)
 - ⚡ [Cloudflare Workers Docs](https://developers.cloudflare.com/workers/)
+
+## License
+
+MIT License - see [LICENSE](LICENSE) file for details.
 
 ## Powered By
 
@@ -258,4 +294,5 @@ MIT License - see [LICENSE](LICENSE) file for details.
 
 ---
 
-Built with ❤️ using Mastra AI framework and DeepSeek API
+Built with ❤️ using Mastra AI framework and DeepSeek API  
+Deploy with one command: `npm run deploy`
