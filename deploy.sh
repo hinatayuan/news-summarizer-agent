@@ -13,6 +13,14 @@ if ! command -v npm &> /dev/null; then
     exit 1
 fi
 
+# 检查 Node.js 版本
+NODE_VERSION=$(node -v | cut -d'v' -f2)
+REQUIRED_VERSION="20.0.0"
+if [ "$(printf '%s\n' "$REQUIRED_VERSION" "$NODE_VERSION" | sort -V | head -n1)" != "$REQUIRED_VERSION" ]; then
+    echo "⚠️  警告: 建议使用 Node.js 20.0+ 版本"
+    echo "⚠️  Warning: Node.js 20.0+ is recommended"
+fi
+
 # 检查是否存在 .env 文件
 if [ ! -f ".env" ]; then
     echo "📝 创建 .env 文件..."
@@ -22,45 +30,159 @@ if [ ! -f ".env" ]; then
     echo "✅ .env file created, please edit the configuration as needed"
 fi
 
-# 安装依赖
+# 清理和安装依赖
+echo "🧹 清理旧的依赖..."
+echo "🧹 Cleaning old dependencies..."
+rm -rf node_modules package-lock.json
+
 echo "📦 安装依赖..."
 echo "📦 Installing dependencies..."
 npm install
 
+if [ $? -ne 0 ]; then
+    echo "❌ 依赖安装失败，尝试使用 yarn..."
+    echo "❌ npm install failed, trying with yarn..."
+    
+    if command -v yarn &> /dev/null; then
+        yarn install
+        if [ $? -ne 0 ]; then
+            echo "❌ yarn 安装也失败了"
+            echo "❌ yarn install also failed"
+            exit 1
+        fi
+    else
+        echo "❌ 请安装 yarn 或修复 npm 问题"
+        echo "❌ Please install yarn or fix npm issues"
+        exit 1
+    fi
+fi
+
+# 检查 mastra 是否可用
+echo "🔍 检查 Mastra 命令..."
+echo "🔍 Checking Mastra command..."
+
+if ! npx mastra --version &> /dev/null; then
+    echo "📥 安装 Mastra CLI..."
+    echo "📥 Installing Mastra CLI..."
+    npm install -g @mastra/cli@latest
+    
+    if [ $? -ne 0 ]; then
+        echo "⚠️  全局安装失败，将使用 npx 运行"
+        echo "⚠️  Global install failed, will use npx"
+    fi
+fi
+
 # 构建项目
 echo "🔨 构建项目..."
 echo "🔨 Building project..."
-npm run build
 
-if [ $? -ne 0 ]; then
+# 尝试多种方式运行 mastra build
+if command -v mastra &> /dev/null; then
+    echo "使用全局 mastra 命令..."
+    mastra build
+elif npx mastra --version &> /dev/null; then
+    echo "使用 npx mastra 命令..."
+    npx mastra build
+else
+    echo "❌ 无法找到 mastra 命令，尝试手动构建..."
+    echo "❌ Cannot find mastra command, trying manual build..."
+    
+    # 创建 TypeScript 配置如果不存在
+    if [ ! -f "tsconfig.json" ]; then
+        echo "📝 创建 TypeScript 配置..."
+        echo '{
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["ES2022"],
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "allowSyntheticDefaultImports": true,
+    "declaration": true,
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "resolveJsonModule": true,
+    "isolatedModules": true
+  },
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "dist"]
+}' > tsconfig.json
+    fi
+    
+    # 使用 TypeScript 编译器
+    npx tsc --outDir dist --module commonjs --target es2020
+fi
+
+BUILD_EXIT_CODE=$?
+
+if [ $BUILD_EXIT_CODE -ne 0 ]; then
     echo "❌ 构建失败"
     echo "❌ Build failed"
+    echo ""
+    echo "🔍 故障排除步骤："
+    echo "🔍 Troubleshooting steps:"
+    echo "1. 检查 Node.js 版本: node -v (需要 20.0+)"
+    echo "2. 清理缓存: npm cache clean --force"
+    echo "3. 重新安装: rm -rf node_modules && npm install"
+    echo "4. 手动安装 Mastra: npm install -g @mastra/cli"
     exit 1
 fi
 
 # 部署到 Cloudflare Workers
 echo "🌍 部署到 Cloudflare Workers..."
 echo "🌍 Deploying to Cloudflare Workers..."
-npm run deploy
 
-if [ $? -eq 0 ]; then
+# 尝试多种方式运行 mastra deploy
+if command -v mastra &> /dev/null; then
+    echo "使用全局 mastra 命令部署..."
+    mastra deploy
+elif npx mastra --version &> /dev/null; then
+    echo "使用 npx mastra 命令部署..."
+    npx mastra deploy
+else
+    echo "❌ 无法找到 mastra 部署命令"
+    echo "❌ Cannot find mastra deploy command"
+    echo ""
+    echo "📝 手动部署步骤："
+    echo "📝 Manual deployment steps:"
+    echo "1. npm install -g @mastra/cli"
+    echo "2. mastra deploy"
+    echo "3. 或者查看 docs/CLOUDFLARE_DEPLOY.md 了解详细步骤"
+    exit 1
+fi
+
+DEPLOY_EXIT_CODE=$?
+
+if [ $DEPLOY_EXIT_CODE -eq 0 ]; then
     echo ""
     echo "🎉 部署成功！"
     echo "🎉 Deployment successful!"
     echo ""
     echo "📋 你的 API 端点："
     echo "📋 Your API endpoints:"
-    echo "   健康检查 / Health: https://yd-mastra-agent.your-subdomain.workers.dev/health"
-    echo "   快速新闻 / Quick News: https://yd-mastra-agent.your-subdomain.workers.dev/api/news"
-    echo "   详细分析 / Analysis: https://yd-mastra-agent.your-subdomain.workers.dev/api/summarize"
-    echo "   API 文档 / Docs: https://yd-mastra-agent.your-subdomain.workers.dev/api/docs"
+    echo "   健康检查 / Health: https://yd-mastra-agent.YOUR-SUBDOMAIN.workers.dev/health"
+    echo "   快速新闻 / Quick News: https://yd-mastra-agent.YOUR-SUBDOMAIN.workers.dev/api/news"
+    echo "   详细分析 / Analysis: https://yd-mastra-agent.YOUR-SUBDOMAIN.workers.dev/api/summarize"
+    echo "   API 文档 / Docs: https://yd-mastra-agent.YOUR-SUBDOMAIN.workers.dev/api/docs"
     echo ""
     echo "🧪 测试部署："
     echo "🧪 Test deployment:"
-    echo "   curl https://yd-mastra-agent.your-subdomain.workers.dev/health"
+    echo "   curl https://yd-mastra-agent.YOUR-SUBDOMAIN.workers.dev/health"
     echo ""
+    echo "📖 更多使用示例请查看 examples/ 目录"
+    echo "📖 Check examples/ directory for more usage examples"
 else
-    echo "❌ 部署失败，请检查配置和网络连接"
-    echo "❌ Deployment failed, please check configuration and network connection"
+    echo "❌ 部署失败"
+    echo "❌ Deployment failed"
+    echo ""
+    echo "🔍 可能的解决方案："
+    echo "🔍 Possible solutions:"
+    echo "1. 检查网络连接"
+    echo "2. 验证 Cloudflare 凭据"
+    echo "3. 查看 .env 文件配置"
+    echo "4. 参考 docs/CLOUDFLARE_DEPLOY.md"
     exit 1
 fi
