@@ -33,10 +33,11 @@ fi
 # 清理和安装依赖
 echo "🧹 清理旧的依赖..."
 echo "🧹 Cleaning old dependencies..."
-rm -rf node_modules package-lock.json
+rm -rf node_modules package-lock.json .mastra
 
 echo "📦 安装依赖..."
 echo "📦 Installing dependencies..."
+npm cache clean --force
 npm install
 
 if [ $? -ne 0 ]; then
@@ -57,63 +58,32 @@ if [ $? -ne 0 ]; then
     fi
 fi
 
-# 检查 mastra 是否可用
+# 检查 mastra 是否可用（不需要单独安装 CLI）
 echo "🔍 检查 Mastra 命令..."
 echo "🔍 Checking Mastra command..."
-
-if ! npx mastra --version &> /dev/null; then
-    echo "📥 安装 Mastra CLI..."
-    echo "📥 Installing Mastra CLI..."
-    npm install -g @mastra/cli@latest
-    
-    if [ $? -ne 0 ]; then
-        echo "⚠️  全局安装失败，将使用 npx 运行"
-        echo "⚠️  Global install failed, will use npx"
-    fi
-fi
 
 # 构建项目
 echo "🔨 构建项目..."
 echo "🔨 Building project..."
 
 # 尝试多种方式运行 mastra build
-if command -v mastra &> /dev/null; then
-    echo "使用全局 mastra 命令..."
-    mastra build
-elif npx mastra --version &> /dev/null; then
-    echo "使用 npx mastra 命令..."
+if npx mastra --version &> /dev/null; then
+    echo "✅ 使用 npx mastra 命令..."
     npx mastra build
+elif command -v mastra &> /dev/null; then
+    echo "✅ 使用全局 mastra 命令..."
+    mastra build
 else
-    echo "❌ 无法找到 mastra 命令，尝试手动构建..."
-    echo "❌ Cannot find mastra command, trying manual build..."
+    echo "📥 安装 mastra 包..."
+    npm install -g mastra@latest
     
-    # 创建 TypeScript 配置如果不存在
-    if [ ! -f "tsconfig.json" ]; then
-        echo "📝 创建 TypeScript 配置..."
-        echo '{
-  "compilerOptions": {
-    "target": "ES2022",
-    "lib": ["ES2022"],
-    "module": "ESNext",
-    "moduleResolution": "bundler",
-    "strict": true,
-    "esModuleInterop": true,
-    "skipLibCheck": true,
-    "forceConsistentCasingInFileNames": true,
-    "allowSyntheticDefaultImports": true,
-    "declaration": true,
-    "outDir": "./dist",
-    "rootDir": "./src",
-    "resolveJsonModule": true,
-    "isolatedModules": true
-  },
-  "include": ["src/**/*"],
-  "exclude": ["node_modules", "dist"]
-}' > tsconfig.json
+    if command -v mastra &> /dev/null; then
+        echo "✅ mastra 安装成功，开始构建..."
+        mastra build
+    else
+        echo "⚠️  mastra 全局安装失败，使用 npx..."
+        npx mastra build
     fi
-    
-    # 使用 TypeScript 编译器
-    npx tsc --outDir dist --module commonjs --target es2020
 fi
 
 BUILD_EXIT_CODE=$?
@@ -127,7 +97,8 @@ if [ $BUILD_EXIT_CODE -ne 0 ]; then
     echo "1. 检查 Node.js 版本: node -v (需要 20.0+)"
     echo "2. 清理缓存: npm cache clean --force"
     echo "3. 重新安装: rm -rf node_modules && npm install"
-    echo "4. 手动安装 Mastra: npm install -g @mastra/cli"
+    echo "4. 手动安装 Mastra: npm install -g mastra@latest"
+    echo "5. 使用 npx: npx mastra build"
     exit 1
 fi
 
@@ -137,10 +108,10 @@ echo "🌍 Deploying to Cloudflare Workers..."
 
 # 尝试多种方式运行 mastra deploy
 if command -v mastra &> /dev/null; then
-    echo "使用全局 mastra 命令部署..."
+    echo "✅ 使用全局 mastra 命令部署..."
     mastra deploy
 elif npx mastra --version &> /dev/null; then
-    echo "使用 npx mastra 命令部署..."
+    echo "✅ 使用 npx mastra 命令部署..."
     npx mastra deploy
 else
     echo "❌ 无法找到 mastra 部署命令"
@@ -148,9 +119,10 @@ else
     echo ""
     echo "📝 手动部署步骤："
     echo "📝 Manual deployment steps:"
-    echo "1. npm install -g @mastra/cli"
+    echo "1. npm install -g mastra@latest"
     echo "2. mastra deploy"
-    echo "3. 或者查看 docs/CLOUDFLARE_DEPLOY.md 了解详细步骤"
+    echo "3. 或者 npx mastra deploy"
+    echo "4. 或者查看 docs/MANUAL_DEPLOY.md 了解详细步骤"
     exit 1
 fi
 
@@ -183,6 +155,6 @@ else
     echo "1. 检查网络连接"
     echo "2. 验证 Cloudflare 凭据"
     echo "3. 查看 .env 文件配置"
-    echo "4. 参考 docs/CLOUDFLARE_DEPLOY.md"
+    echo "4. 参考 docs/MANUAL_DEPLOY.md"
     exit 1
 fi
