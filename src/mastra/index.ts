@@ -24,21 +24,22 @@ export const mastra = new Mastra({
     deepseekR1: deepseek('deepseek-reasoner'),
   },
   deployer: new CloudflareDeployer({
-    scope: process.env.CLOUDFLARE_ACCOUNT_ID || '', // 你的 Cloudflare Account ID
-    projectName: 'news-summarizer-agent',
+    scope: process.env.CLOUDFLARE_ACCOUNT_ID || '4f626c727482ce1b73d26bb9f9244d79',
+    projectName: process.env.CLOUDFLARE_PROJECT_NAME || 'yd-mastra-agent',
     auth: {
-      apiToken: process.env.CLOUDFLARE_API_TOKEN || '', // 你的 Cloudflare API Token
-      apiEmail: process.env.CLOUDFLARE_EMAIL || '', // 你的 Cloudflare 邮箱（可选）
+      apiToken: process.env.CLOUDFLARE_API_TOKEN || 'USSX7J_xBXhvmHzNsCOTd5aEOhYa7xodTexUiY3j',
+      apiEmail: process.env.CLOUDFLARE_EMAIL || '', // 你的邮箱（可选）
     },
     env: {
       DEEPSEEK_API_KEY: process.env.DEEPSEEK_API_KEY || 'sk-1edd0944d3d24a76b3ded1aa0298e20f',
       NODE_ENV: 'production',
     },
     kvNamespaces: [
-      {
-        binding: 'NEWS_CACHE',
-        id: process.env.CLOUDFLARE_KV_NAMESPACE_ID || '', // KV Namespace ID（可选）
-      },
+      // 如果你创建了 KV 命名空间，取消注释并填入 ID
+      // {
+      //   binding: 'NEWS_CACHE',
+      //   id: process.env.CLOUDFLARE_KV_NAMESPACE_ID || '',
+      // },
     ],
     routes: [
       // 如果你有自定义域名，可以配置路由
