@@ -26,7 +26,8 @@ export const mastra = new Mastra({
   deployer: new CloudflareDeployer({
     // 使用硬编码值确保配置正确
     scope: '4f626c727482ce1b73d26bb9f9244d79',
-    projectName: 'yd-mastra-agent',
+    // 使用符合 Cloudflare 规范的项目名称
+    projectName: process.env.CLOUDFLARE_PROJECT_NAME || 'news-agent',
     auth: {
       apiToken: 'nludYXBjgyYP4lQvfMiqb061Hk6juU9rwmWjs56q',
       apiEmail: process.env.CLOUDFLARE_EMAIL || 'Liuweiyuan0713@gmail.com',
