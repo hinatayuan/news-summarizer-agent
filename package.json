@@ -1,0 +1,38 @@
+{
+  "name": "news-summarizer-agent",
+  "version": "1.0.0",
+  "description": "Real-time news summarizer agent built with Mastra and DeepSeek API",
+  "main": "dist/index.js",
+  "type": "module",
+  "scripts": {
+    "dev": "mastra dev",
+    "build": "mastra build",
+    "start": "mastra start",
+    "db:push": "mastra db push",
+    "db:studio": "mastra db studio",
+    "deploy": "wrangler deploy"
+  },
+  "keywords": [
+    "mastra",
+    "ai",
+    "agent",
+    "news",
+    "summarizer",
+    "deepseek",
+    "cloudflare-workers"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "@mastra/core": "latest",
+    "@ai-sdk/openai": "^1.0.32",
+    "axios": "^1.7.7",
+    "cheerio": "^1.0.0",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.1",
+    "typescript": "^5.7.2",
+    "wrangler": "^3.92.0"
+  }
+}
