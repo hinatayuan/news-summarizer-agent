@@ -1,0 +1,25 @@
+name = "news-summarizer-agent"
+main = "dist/index.js"
+compatibility_date = "2024-03-01"
+compatibility_flags = ["nodejs_compat"]
+
+[vars]
+NODE_ENV = "production"
+
+[build]
+command = "npm run build"
+
+[[kv_namespaces]]
+binding = "NEWS_CACHE"
+id = "your-kv-namespace-id"
+preview_id = "your-preview-kv-namespace-id"
+
+[build.upload]
+format = "modules"
+dir = "dist"
+main = "./index.js"
+
+# Environment variables for deployment
+# Set these in Cloudflare Workers dashboard or via wrangler secret
+# DEEPSEEK_API_KEY = your-deepseek-api-key
+# NEWS_API_KEY = your-news-api-key (optional)
