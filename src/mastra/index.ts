@@ -1,13 +1,12 @@
 import { Mastra } from '@mastra/core';
-import { CloudflareDeployer } from '@mastra/deployer-cloudflare';
 import { createOpenAI } from '@ai-sdk/openai';
 import { newsSummarizerAgent } from './agents/news-summarizer';
 import { fetchNewsFromRss } from './tools/news-fetcher';
 import { summarizeNews } from './tools/news-summarizer';
 
-// Configure DeepSeek API using OpenAI-compatible interface
+// 安全的 DeepSeek API 配置 - 从环境变量获取密钥
 const deepseek = createOpenAI({
-  apiKey: process.env.DEEPSEEK_API_KEY || 'sk-1edd0944d3d24a76b3ded1aa0298e20f',
+  apiKey: process.env.DEEPSEEK_API_KEY || '',
   baseURL: 'https://api.deepseek.com',
 });
 
@@ -23,35 +22,7 @@ export const mastra = new Mastra({
     deepseekV3: deepseek('deepseek-chat'),
     deepseekR1: deepseek('deepseek-reasoner'),
   },
-  deployer: new CloudflareDeployer({
-    // 使用硬编码值确保配置正确
-    scope: '4f626c727482ce1b73d26bb9f9244d79',
-    // 使用符合 Cloudflare 规范的项目名称
-    projectName: process.env.CLOUDFLARE_PROJECT_NAME || 'news-agent',
-    auth: {
-      apiToken: 'nludYXBjgyYP4lQvfMiqb061Hk6juU9rwmWjs56q',
-      apiEmail: process.env.CLOUDFLARE_EMAIL || 'Liuweiyuan0713@gmail.com',
-    },
-    env: {
-      DEEPSEEK_API_KEY: 'sk-1edd0944d3d24a76b3ded1aa0298e20f',
-      NODE_ENV: 'production',
-    },
-    kvNamespaces: [
-      // KV 命名空间暂时注释掉，避免权限问题
-      // {
-      //   binding: 'NEWS_CACHE',
-      //   id: process.env.CLOUDFLARE_KV_NAMESPACE_ID || '',
-      // },
-    ],
-    routes: [
-      // 自定义域名路由暂时注释掉
-      // {
-      //   pattern: 'news-api.yourdomain.com/*',
-      //   zone_name: 'yourdomain.com',
-      //   custom_domain: true,
-      // },
-    ],
-  }),
+  // 移除 CloudflareDeployer，使用 Wrangler 部署
   server: {
     port: 4111,
     timeout: 30000,
