@@ -1,25 +1,16 @@
-name = "yd-mastra-agent"
-main = "dist/index.js"
-compatibility_date = "2024-11-01"
+name = "news-agent"
+main = "src/index.ts"
+compatibility_date = "2024-01-01"
 compatibility_flags = ["nodejs_compat"]
 
 [vars]
 NODE_ENV = "production"
-DEEPSEEK_API_KEY = "sk-1edd0944d3d24a76b3ded1aa0298e20f"
 
-# Cloudflare account configuration
-account_id = "4f626c727482ce1b73d26bb9f9244d79"
+# 环境变量通过 wrangler secret 命令设置
+# 部署前运行: wrangler secret put DEEPSEEK_API_KEY
 
-# Optional: KV namespace for caching
-# [[kv_namespaces]]
-# binding = "NEWS_CACHE"
-# id = "your-kv-namespace-id"
-# preview_id = "your-preview-kv-namespace-id"
+[env.production]
+name = "news-agent-prod"
 
-[build]
-command = "npm run build"
-
-# Routes (uncomment if you have a custom domain)
-# [[routes]]
-# pattern = "news-api.yourdomain.com/*"
-# zone_name = "yourdomain.com"
+[env.staging]
+name = "news-agent-staging"
